@@ -1,8 +1,8 @@
 import pandas as pd
 import json
 
-options = {'display.max_columns': None, 'display.width': None,'display.max_rows': None, 'display.max_colwidth': 100}
-[pd.set_option(option, value) for option, value in options.items()]
+# options = {'display.max_columns': None, 'display.width': None,'display.max_rows': None, 'display.max_colwidth': 100}
+# [pd.set_option(option, value) for option, value in options.items()]
 
 with open('../mojscrapy/scrap_results_decoded.json', encoding='utf-8') as f:
     results_list = json.load(f)
@@ -27,32 +27,22 @@ for item in results_list:
         [value.pop(useless_key) for useless_key in ['100g', 'Skład', 'Porcjax']]
     final_dict.update(item)
 
-df = pd.DataFrame.from_dict(final_dict, orient='index')
-print(df.head())
-
-df['Skład'] = df['100 g'].map(lambda x: list(x.keys()))
-
-df = df.explode('Skład')
-
-print(df.head())
-
 # print(final_dict)
-# for item, szku in final_dict.items():
-#     print(item, szku)
+
+unnested_dict = {}
+for outerKey, innerDict in final_dict.items():
+    for innerKey, innerDict2 in innerDict.items():
+        for innerKey2, values in innerDict2.items():
+            unnested_dict[(outerKey, innerKey, innerKey2)] = values
+# print(unnested_dict)
+
+df = pd.DataFrame(unnested_dict, index=[0])
+df_t = df.transpose()
+print(df_t.head(20))
 
 
-# df = pandas.DataFrame.from_dict(l3, orient='index')
-
-# results_dict = [list(item.values())[0] for item in results_list]
-
-# for item in results_dict:
-    # print(item)
-# print(results_dict)
-# print(results_dict.keys())
-# print(results_dict.values())
-
-# results_df = pd.DataFrame.from_dict(results_dict)
-
-# print(results_df.head(9))
-#print(results.columns)
-
+# df = pd.DataFrame.from_dict(final_dict, orient='index')
+# print(df.head())
+# df['Skład'] = df['100 g'].map(lambda x: list(x.keys()))
+# df = df.explode('Skład')
+# print(df.head())
