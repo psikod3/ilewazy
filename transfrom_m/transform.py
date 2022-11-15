@@ -7,11 +7,11 @@ import json
 with open('../mojscrapy/scrap_results_decoded.json', encoding='utf-8') as f:
     results_list = json.load(f)
 
-# print(results_list)
+# reorganizing table
 final_dict = {}
 
 for item in results_list:
-    for key,value in item.items():
+    for key, value in item.items():
         value['Skład'] = value.pop(key)
         temp = list(value.keys())
         temp2 = [item for item in temp if 'na zdjęciu' in item]
@@ -27,22 +27,32 @@ for item in results_list:
         [value.pop(useless_key) for useless_key in ['100g', 'Skład', 'Porcjax']]
     final_dict.update(item)
 
-# print(final_dict)
-
+# moving all keys to tuple, so df will have easy time adding them to multiindex
 unnested_dict = {}
 for outerKey, innerDict in final_dict.items():
     for innerKey, innerDict2 in innerDict.items():
         for innerKey2, values in innerDict2.items():
             unnested_dict[(outerKey, innerKey, innerKey2)] = values
+
+# 1) removing letters and spaces from values, and changing , to .
+# 2) recreating unnested_dict with cleaned values
+value_list = list(unnested_dict.values())
+value_list_cleaned = []
+for item in value_list:
+    str(item)
+    item_cleaned = item.replace(" kcal", "").replace(" g", "").replace(",", ".")
+    value_list_cleaned.append(item_cleaned)
+
+unnested_dict_cleaned = {}
+count = 0
+for key, value in unnested_dict.items():
+    unnested_dict_cleaned[key] = value_list_cleaned[count]
+    count = count + 1
+
 # print(unnested_dict)
+# print(unnested_dict_cleaned)
 
-df = pd.DataFrame(unnested_dict, index=[0])
-df_t = df.transpose()
-print(df_t.head(20))
-
-
-# df = pd.DataFrame.from_dict(final_dict, orient='index')
-# print(df.head())
-# df['Skład'] = df['100 g'].map(lambda x: list(x.keys()))
-# df = df.explode('Skład')
-# print(df.head())
+# creating multiindex dataframe
+df = pd.DataFrame(unnested_dict_cleaned, index=[0])
+ilewazy_df = df.transpose()  # looks better
+# print(ilewazy_df.head(20))
