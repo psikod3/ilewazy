@@ -4,25 +4,25 @@ import json
 # options = {'display.max_columns': None, 'display.width': None,'display.max_rows': None, 'display.max_colwidth': 100}
 # [pd.set_option(option, value) for option, value in options.items()]
 
-with open('../mojscrapy/scrap_results_decoded.json', encoding='utf-8') as f:
+with open('../mojscrapy/scrap_results_decoded_fixed.json', encoding='utf-8') as f:
     results_list = json.load(f)
+
+# duplicate check
 # print(len(results_list))
 # x=[list(item.keys())[0] for item in results_list]
-#
 # y=[item for item in x if x.count(item) >=2]
 # print(y)
 # print(len(set(x)))
 # input()
+
 # reorganizing table
 final_dict = {}
-# na_zdjeciu = []  # gonna need this for later
+na_zdjeciu = []  # gonna need this for later
 for item in results_list:
     for key, value in item.items():
         value['Skład'] = value.pop(key)
         temp = list(value.keys())
         temp2 = [item for item in temp if 'na zdjęciu' in item]
-        # str_temp2 = str(temp2)
-        # na_zdjeciu.append(str_temp2)
         value['Porcjax'] = value.pop(temp2[0])
         dict_temp = {}
         for number, grams in value['100g'].items():
@@ -34,8 +34,6 @@ for item in results_list:
         value['Porcja'] = dict_temp2
         [value.pop(useless_key) for useless_key in ['100g', 'Skład', 'Porcjax']]
     final_dict.update(item)
-print(final_dict)
-print('final_dict', len(final_dict))
 
 # moving all keys to tuple, so df will have easy time adding them to multiindex
 #   on the 1st level of index will be product name
@@ -71,9 +69,9 @@ print('unnested_dict_cleaned', len(unnested_dict_cleaned))
 # for item in na_zdjeciu:
 #     item_cleaned = item.replace("['na zdjęciu (", "").replace(" g)']", "").replace(",", ".")
 #     na_zdjeciu_cleaned.append(item_cleaned)
-# print(na_zdjeciu)
-# print(na_zdjeciu_cleaned)
-print('dl na zdj_c', len(na_zdjeciu_cleaned))  # dl na zdj_c 5614 OK!
+# # print(na_zdjeciu)
+# # print(na_zdjeciu_cleaned)
+# print('dl na zdj_c', len(na_zdjeciu_cleaned))  # dl na zdj_c 5614 OK!
 
 # creating (multiindex) dataframe from dict with tuples as keys
 mdf = pd.DataFrame(unnested_dict_cleaned, index=[0])
