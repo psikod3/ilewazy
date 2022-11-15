@@ -62,7 +62,7 @@ for outerKey, innerDict in final_dict.items():
 
 # print(unnested_dict)
 # print(unnested_dict_cleaned)
-print('unnested_dict_cleaned', len(unnested_dict_cleaned))
+# print('unnested_dict_cleaned', len(unnested_dict_cleaned))
 
 # print('dl na zdj', len(na_zdjeciu))
 # na_zdjeciu_cleaned = []
