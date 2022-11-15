@@ -28,6 +28,9 @@ for item in results_list:
     final_dict.update(item)
 
 # moving all keys to tuple, so df will have easy time adding them to multiindex
+#   on the 1st level of index will be product name
+#   2nd - portion size: 100 g or default
+#   3rd - composition (Skład)
 unnested_dict = {}
 for outerKey, innerDict in final_dict.items():
     for innerKey, innerDict2 in innerDict.items():
