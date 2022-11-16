@@ -67,6 +67,7 @@ mdf_t = mdf.transpose()  # looks better
 df = mdf_t.reset_index()  # converting multiindex to normal df
 df['id'] = range(len(df.index))  # setting up unique ids for merge
 
+'''
 # splitting 100 g related data from 0 column into GRAMY and KCAL
 stog_sklad = df[(df['level_1'] == "nowe 100g") & (df['level_2'] != "Energia")]
 stog_sklad_2 = stog_sklad.rename(columns={0: "100 g (skład)"})  # new df cause inplace=True throws warning
@@ -77,14 +78,15 @@ stog_en_2 = stog_en.rename(columns={0: "100 g (kcal)"})
 stog_en_2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
 # print(stog_en.head(10))
 
-df2 = df.merge(stog_sklad, on='id', how='outer')
+df2 = df.merge(stog_sklad_2, on='id', how='outer')
 print(df2.head(20))
 # print('df2', len(df2.index))
-df3 = df2.merge(stog_en, on='id', how='outer')
+df3 = df2.merge(stog_en_2, on='id', how='outer')
 print(df3.head(20))
-# print('df3', len(df3.index))
+# print('df3', len(df3.index)) '''
 
-
+# elegancko ale lepiej zrobic by w level_1 (Porcja)  byly dwa wiersze: 100g oraz wartosc z na zdjeciu
+# a bialko, wegle itd przeniesc na kolumny
 
 
 # splitting of the 100g column
