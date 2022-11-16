@@ -64,8 +64,67 @@ mdf = pd.DataFrame(unnested_dict, index=[0])
 mdf_t = mdf.transpose()  # looks better
 # mdf_t.rename(columns={0: 'kcal / g'}, inplace=True)
 
-df = mdf_t.reset_index()  # converting multiindex to normal df
-df['id'] = range(len(df.index))  # setting up unique ids for merge
+pre_df = mdf_t.reset_index()  # converting multiindex to normal df
+df = pre_df.rename(columns={0: "Dane"})
+df.index.name = 'idx'
+
+print(df.head(20))
+
+energia = df[(df['level_2'] == "Energia")]
+energia2 = energia.rename(columns={'Dane': "Energia (kcal)"})  # new df cause inplace=True throws warning
+energia2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+bialko = df[(df['level_2'] == "Białko")]
+bialko2 = bialko.rename(columns={'Dane': "Białko (g)"})
+bialko2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+tluszcz = df[(df['level_2'] == "Tłuszcz")]
+tluszcz2 = tluszcz.rename(columns={'Dane': "Tłuszcz (g)"})
+tluszcz2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+tluszcz_nasyc = df[(df['level_2'] == "Kwasy tłuszczowe nasycone")]
+tluszcz_nasyc2 = tluszcz_nasyc.rename(columns={'Dane': "Kwasy tłuszczowe nasycone (g)"})
+tluszcz_nasyc2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+wegle = df[(df['level_2'] == "Węglowodany")]
+wegle2 = wegle.rename(columns={'Dane': "Węglowodany (g)"})
+wegle2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+cukry = df[(df['level_2'] == "Cukry proste")]
+cukry2 = cukry.rename(columns={'Dane': "Cukry proste (g)"})
+cukry2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+blonnik = df[(df['level_2'] == "Błonnik")]
+blonnik2 = blonnik.rename(columns={'Dane': "Błonnik (g)"})
+blonnik2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+blonnik = df[(df['level_2'] == "Sól")]
+blonnik2 = blonnik.rename(columns={'Dane': "Błonnik (g)"})
+blonnik2.drop(columns=['level_0', 'level_1', 'level_2'], inplace=True)
+
+
+df_en = df.merge(energia2, on='idx', how='outer')
+df_en_b = df_en.merge(bialko2, on='idx', how='outer')
+df_en_b_t = df_en_b.merge(tluszcz2, on='idx', how='outer')
+df_en_b_t_tn = df_en_b_t.merge(tluszcz_nasyc2, on='idx', how='outer')
+df_en_b_t_tn_w = df_en_b_t_tn.merge(wegle2, on='idx', how='outer')
+df_en_b_t_tn_w_c = df_en_b_t_tn_w.merge(cukry2, on='idx', how='outer')
+df_en_b_t_tn_w_c_b = df_en_b_t_tn_w_c.merge(blonnik2, on='idx', how='outer')
+
+print(df_en_b_t_tn_w.head(16))
+
+
+
+# len check
+# print('df', len(df.index))
+# print('df_en', len(df_en.index))
+
+# df2.level_1 = df2.Dane.where(df2.level_2 == 'Wielkość porcji', df2.level_1)
+
+
+# print(df2.head(20))
+
+
 
 '''
 # splitting 100 g related data from 0 column into GRAMY and KCAL
