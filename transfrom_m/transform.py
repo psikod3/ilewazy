@@ -4,6 +4,13 @@ import json
 # options = {'display.max_columns': None, 'display.width': None,'display.max_rows': None, 'display.max_colwidth': 100}
 # [pd.set_option(option, value) for option, value in options.items()]
 
+<<<<<<< Updated upstream
+=======
+# # make pycharm console view wider df
+pd.set_option('display.width', 400)
+pd.set_option('display.max_columns', 12)
+
+>>>>>>> Stashed changes
 with open('../mojscrapy/scrap_results_decoded_fixed.json', encoding='utf-8') as f:
     results_list = json.load(f)  # results from file are actually a list of dicts
 
@@ -46,7 +53,10 @@ for dictionary in results_list:
         name_2['nowa Porcja']['Wielkość porcji'] = key_list_2[0]
 
     organized_dict.update(dictionary)
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 
 # moving all keys to tuple, so df will have easy time adding them to multiindex
 #   on the 1st level of index will be product name
@@ -58,6 +68,7 @@ for outerKey, innerDict in organized_dict.items():
         for innerKey2, values in innerDict2.items():
             unnested_dict[(outerKey, innerKey, innerKey2)] = values
 
+<<<<<<< Updated upstream
 
 # creating (multiindex) dataframe from dict with tuples as keys
 mdf = pd.DataFrame(unnested_dict, index=[0])
@@ -69,6 +80,10 @@ df = pre_df.rename(columns={0: "Dane"})
 df.index.name = 'idx'
 
 print(df.head(20))
+=======
+mdf = pd.DataFrame(unnested_dict, index=[0])  # creating (multiindex) dataframe from dict with tuples as keys
+mdf_transposed = mdf.transpose()  # looks better
+>>>>>>> Stashed changes
 
 energia = df[(df['level_2'] == "Energia")]
 energia2 = energia.rename(columns={'Dane': "Energia (kcal)"})  # new df cause inplace=True throws warning
@@ -144,6 +159,7 @@ df3 = df2.merge(stog_en_2, on='id', how='outer')
 print(df3.head(20))
 # print('df3', len(df3.index)) '''
 
+<<<<<<< Updated upstream
 # elegancko ale lepiej zrobic by w level_1 (Porcja)  byly dwa wiersze: 100g oraz wartosc z na zdjeciu
 # a bialko, wegle itd przeniesc na kolumny
 
@@ -175,3 +191,5 @@ print(df3.head(20))
 # print(df3.head(20))
 # print('df3', len(df3.index))
 # print(len(ilewazy_df.index))
+=======
+>>>>>>> Stashed changes
