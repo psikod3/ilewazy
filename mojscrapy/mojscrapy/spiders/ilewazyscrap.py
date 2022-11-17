@@ -27,3 +27,5 @@ class IlewazyscrapSpider(scrapy.Spider):
         #import pdb
         # pdb.set_trace()
         yield {product_name[0]: results}
+
+ # Add FEED_EXPORT_ENCODING = 'utf-8' to settings.py if saving as .json
