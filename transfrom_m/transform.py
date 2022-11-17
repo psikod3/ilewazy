@@ -64,7 +64,7 @@ for outerKey, innerDict in organized_dict.items():
 mdf = pd.DataFrame(unnested_dict, index=[0])  # creating (multiindex) dataframe from dict with tuples as keys
 mdf_transposed = mdf.transpose()  # looks better
 
-# unstacks most right index (Energia, Białko, Tłuszcz ... Wielkość porcji ) to separate rows
+# unstacks most right index (Energia, Białko, Tłuszcz ... Wielkość porcji ) to separate columns
 # https://pandas.pydata.org/docs/user_guide/reshaping.html#reshaping-stacking
 mdf_unstacked = mdf_transposed.unstack()
 
