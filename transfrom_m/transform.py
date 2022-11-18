@@ -33,7 +33,7 @@ for dictionary in results_list:
                 # list comp: key_list_2 = [item for item in key_list if 'na zdjęciu' in item]
         name_2['Porcja'] = name_2.pop(key_list_2[0])  # replacing "blah na zdjeciu" in 2nd dict with key with one name
 
-        dict_temp = {}  # preparation to remove pointless keys in dicts (i.e. "0" , "1", "2") called later indexes
+        dict_temp = {}  # preparation to remove pointless keys in dicts (i.e. "0" , "1", "2") called indexes below
         for index, kcal_g in name_2['100g'].items():
             dict_temp[name_2['Skład'][index]] = kcal_g  # makes dict with keys from values of name_2['Skład'] and values
             # from name_2['100g']
@@ -46,12 +46,12 @@ for dictionary in results_list:
 
         [name_2.pop(useless_key) for useless_key in ['100g', 'Skład', 'Porcja']]  # removing useless dicts
 
-        name_2['nowe 100g']['Wielkość porcji'] = key_list_2[0]  # saving 'na zdjęciu (X g)' for df
+        name_2['nowe 100g']['Wielkość porcji'] = key_list_2[0]  # saving 'na zdjęciu (X g)' for future df
         name_2['nowa Porcja']['Wielkość porcji'] = key_list_2[0]
 
     organized_dict.update(dictionary)
 
-# moving all keys to tuple, so df will have easy time adding them to multiindex
+# moving all keys to tuple, so pandas will have easy time adding them to multiindex
 #   on the 1st level of index will be product name
 #   2nd - portion size: 100 g or default
 #   3rd - composition (Skład)
@@ -64,7 +64,7 @@ for outerKey, innerDict in organized_dict.items():
 mdf = pd.DataFrame(unnested_dict, index=[0])  # creating (multiindex) dataframe from dict with tuples as keys
 mdf_transposed = mdf.transpose()  # looks better
 
-# unstacks most right index (Energia, Białko, Tłuszcz ... Wielkość porcji ) to separate columns
+# unstacks (transposes) most right index Skład (Energia, Białko, Tłuszcz ... Wielkość porcji ) to separate columns
 # https://pandas.pydata.org/docs/user_guide/reshaping.html#reshaping-stacking
 mdf_unstacked = mdf_transposed.unstack()
 
@@ -74,10 +74,15 @@ df.columns = ['Produkt', 'Porcja', 'Białko', 'Błonnik', 'Cukry proste', 'Energ
               'Tłuszcz', 'Kopiuj', 'Węglowodany']
 df.Porcja = df.Kopiuj.where(df.Porcja == 'nowa Porcja', df.Porcja)  # copies values from Kopiuj ('na zdjęciu (62 g) etc)
 df.drop(columns=['Kopiuj'], inplace=True)
+df.set_index(['Produkt'], inplace=True)
 
 # https://sparkbyexamples.com/pandas/pandas-change-position-of-a-column/
+# wyczyścić dane, z - b.d. NaN oraz zmienić na liczby
+# zminic nazwy na koncu Porcja = Porcja (g), Energia (kcal)
 
 print(df.head(10))
+# print(type(mdf))
+
 
 
 
