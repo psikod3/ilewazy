@@ -24,8 +24,9 @@ class IlewazyscrapSpider(scrapy.Spider):
         table = response.xpath('//table[@id="ilewazy-ingedients"]').get()
         composition_df = pd.read_html(table)[0]
         results = composition_df.rename(columns={'Unnamed: 0': product_name[0]}).to_dict()
-        #import pdb
+        # import pdb
         # pdb.set_trace()
         yield {product_name[0]: results}
 
- # Add FEED_EXPORT_ENCODING = 'utf-8' to settings.py if saving as .json
+# Add FEED_EXPORT_ENCODING = 'utf-8' to settings.py if saving as .json
+# https://doc.scrapy.org/en/master/topics/feed-exports.html#std-setting-FEED_EXPORT_ENCODING

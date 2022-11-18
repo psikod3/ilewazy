@@ -6,7 +6,9 @@ import json
 
 # # make pycharm console view wider df
 pd.set_option('display.width', 400)
-pd.set_option('display.max_columns', 12)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.max_rows', None)
+
 
 with open('../mojscrapy/scrap_results_decoded_fixed.json', encoding='utf-8') as f:
     results_list = json.load(f)  # results from file are actually a list of dicts
@@ -74,13 +76,46 @@ df.columns = ['Produkt', 'Porcja', 'Białko', 'Błonnik', 'Cukry proste', 'Energ
               'Tłuszcz', 'Kopiuj', 'Węglowodany']
 df.Porcja = df.Kopiuj.where(df.Porcja == 'nowa Porcja', df.Porcja)  # copies values from Kopiuj ('na zdjęciu (62 g) etc)
 df.drop(columns=['Kopiuj'], inplace=True)
-df.set_index(['Produkt'], inplace=True)
+# df.set_index(['Produkt'], inplace=True)
+
+# cleaning
+df.iloc[9206, 1] = '0'  # df = df.sort_values(by=['Porcja']) one of cells was empty
+df['Porcja'] = df['Porcja'].str.replace("na zdjęciu \(",'', regex=True).str.replace('\)','', regex=True).str.replace('nowe ','')
+df['Białko'] = df['Białko'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Błonnik'] = df['Błonnik'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Cukry proste'] = df['Cukry proste'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Energia'] = df['Energia'].str.replace(',','.').str.replace(' kcal','').str.replace('-','0').str.replace('b.d.','0').astype(int)
+df['Tłuszcze nasycone'] = df['Tłuszcze nasycone'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Sól'] = df['Sól'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Tłuszcz'] = df['Tłuszcz'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df['Węglowodany'] = df['Węglowodany'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+
+# df['Porcja'] = df['Porcja'].str.replace('g','').astype(int)
+
+# proporcje
+# kwasy tłuszczoe
+# sol
+# blonnik
+# cukry proste?
+# jak duzo 'wody' + kcal na 100g lub tylko kcal na 100 g (produkty dietetyczne)
+
+
+
+
+# df.columns = ['Produkt', 'Porcja', 'Energia', 'Białko', 'Tłuszcz', 'Tłuszcze nasycone','Węglowodany', 'Cukry proste','Błonnik','Sól']
+
+# df2 = df['Porcja']
+# df = df.sort_values(by=['Porcja'])
+print(df.head(100))
+
+
+print('df', len(df.index))
 
 # https://sparkbyexamples.com/pandas/pandas-change-position-of-a-column/
 # wyczyścić dane, z - b.d. NaN oraz zmienić na liczby
 # zminic nazwy na koncu Porcja = Porcja (g), Energia (kcal)
 
-print(df.head(10))
+# print(df.head(60))
 # print(type(mdf))
 
 
