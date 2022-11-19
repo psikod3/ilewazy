@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import json
 
@@ -8,7 +9,6 @@ import json
 pd.set_option('display.width', 400)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
-
 
 with open('../mojscrapy/scrap_results_decoded_fixed.json', encoding='utf-8') as f:
     results_list = json.load(f)  # results from file are actually a list of dicts
@@ -76,28 +76,162 @@ df.columns = ['Produkt', 'Porcja', 'Białko', 'Błonnik', 'Cukry proste', 'Energ
               'Tłuszcz', 'Kopiuj', 'Węglowodany']
 df.Porcja = df.Kopiuj.where(df.Porcja == 'nowa Porcja', df.Porcja)  # copies values from Kopiuj ('na zdjęciu (62 g) etc)
 df.drop(columns=['Kopiuj'], inplace=True)
-# df.set_index(['Produkt'], inplace=True)
+df.set_index(['Produkt'], inplace=True)
 
 # cleaning
-df.iloc[9206, 1] = '0'  # df = df.sort_values(by=['Porcja']) one of cells was empty
-df['Porcja'] = df['Porcja'].str.replace("na zdjęciu \(",'', regex=True).str.replace('\)','', regex=True).str.replace('nowe ','')
-df['Białko'] = df['Białko'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Błonnik'] = df['Błonnik'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Cukry proste'] = df['Cukry proste'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Energia'] = df['Energia'].str.replace(',','.').str.replace(' kcal','').str.replace('-','0').str.replace('b.d.','0').astype(int)
-df['Tłuszcze nasycone'] = df['Tłuszcze nasycone'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Sól'] = df['Sól'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Tłuszcz'] = df['Tłuszcz'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
-df['Węglowodany'] = df['Węglowodany'].str.replace(',','.').str.replace(' g','').str.replace('-','0').str.replace('b.d.','0').astype(float)
+df.iloc[9206, 1] = np.nan  # df = df.sort_values(by=['Porcja']) one of cells was empty
+df['Porcja'] = df['Porcja'].str.replace("na zdjęciu \(", '', regex=True).str.replace(' g\)', '', regex=True).str.replace('nowe ', '')
+df['Białko'] = df['Białko'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.', '0').astype(float)
+df['Błonnik'] = df['Błonnik'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.','0').astype(float)
+df['Cukry proste'] = df['Cukry proste'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.', '0').astype(float)
+df['Energia'] = df['Energia'].str.replace(',', '.').str.replace(' kcal', '').str.replace('-', '0').str.replace('b.d.','0').astype(int)
+df['Tłuszcze nasycone'] = df['Tłuszcze nasycone'].str.replace(',', '.').str.replace(' g', '').str.replace('-','0').str.replace('b.d.', '0').astype(float)
+df['Sól'] = df['Sól'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.', '0').astype(float)
+df['Tłuszcz'] = df['Tłuszcz'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.','0').astype(float)
+df['Węglowodany'] = df['Węglowodany'].str.replace(',', '.').str.replace(' g', '').str.replace('-', '0').str.replace('b.d.', '0').astype(float)
+
+
+# Salt check: < 0.3 g / 100 g is low, > 1.5g is high / max  6g per day
+# https://www.nhs.uk/Livewell/Goodfood/Documents/having-too-much-salt-survival-guide.pdf
+def salt_check(df):
+    if df['Porcja'] == '100g' and df['Sól'] < 0.3:
+        return 'niska'
+    elif df['Porcja'] == '100g' and (0.3 <= df['Sól'] <= 1.5):
+        return 'średnia'
+    elif df['Porcja'] == '100g' and df['Sól'] > 1.5:
+        return 'wysoka'
+    elif df['Porcja'] == '100g' and pd.isna(df['Sól']):
+        return 'b. d.'
+    elif df['Porcja'] != '100g' and not pd.isna(df['Sól']):
+        x = df['Sól'] / 6
+        return str(round(x * 100)) + ' % max.'
+    else:
+        return ''
+df['Zaw. soli'] = df.apply(salt_check, axis=1)
+
+
+# Fibre check: 3g /100g -good source, 6g - high source. 30 g per day for adults
+# https://www.bda.uk.com/resource/fibre.html
+def fibre_check(df):
+    if df['Porcja'] == '100g' and (3 <= df['Błonnik'] < 6):
+        return 'dobre'
+    elif df['Porcja'] == '100g' and df['Błonnik'] >= 6.0:
+        return 'bardzo dobre'
+    elif df['Porcja'] == '100g' and pd.isna(df['Błonnik']):
+        return 'b. d.'
+    elif df['Porcja'] != '100g' and not pd.isna(df['Błonnik']):
+        x = df['Błonnik'] / 30
+        return str(round(x * 100)) + ' % RWS'
+    else:
+        return ''
+df['Źródło błonnika'] = df.apply(fibre_check, axis=1)
+
+
+# Saturated fat check: sat fat-free <= 0.1g, low <= 1.5g, high > 5g / men < 30g, women < 20g per day
+# Fat check: fat-free <= 0.5g, low <= 3g, high > 17.5g / women < 70 g per day
+# https://www.nhs.uk/live-well/eat-well/food-types/different-fats-nutrition/
+# https://www.nutrition.org.uk/healthy-sustainable-diets/fat/?level=Consumer
+# https://www.ibdrelief.com/diet/reference-intakes-on-food-labels-explained
+def sat_fat_check(df):
+    if df['Porcja'] == '100g' and df['Tłuszcze nasycone'] <= 0.1:
+        return 'brak'
+    elif df['Porcja'] == '100g' and (0.1 < df['Tłuszcze nasycone'] <= 1.5):
+        return 'niska'
+    elif df['Porcja'] == '100g' and (1.5 < df['Tłuszcze nasycone'] <= 5.0):
+        return 'średnia'
+    elif df['Porcja'] == '100g' and df['Tłuszcze nasycone'] > 5.0:
+        return 'wysoka'
+    elif df['Porcja'] == '100g' and pd.isna(df['Tłuszcze nasycone']):
+        return 'b. d.'
+    elif df['Porcja'] != '100g' and not pd.isna(df['Tłuszcze nasycone']):
+        x = df['Tłuszcze nasycone'] / 20
+        return str(round(x * 100)) + ' % max.'
+    else:
+        return ''
+df['Zaw. t. nasyconych'] = df.apply(sat_fat_check, axis=1)
+
+def fat_check(df):
+    if df['Porcja'] == '100g' and df['Tłuszcz'] <= 0.5:
+        return 'brak'
+    elif df['Porcja'] == '100g' and (0.5 < df['Tłuszcz'] <= 3.0):
+        return 'niska'
+    elif df['Porcja'] == '100g' and (3.0 < df['Tłuszcz'] <= 17.5):
+        return 'średnia'
+    elif df['Porcja'] == '100g' and df['Tłuszcz'] > 17.5:
+        return 'wysoka'
+    elif df['Porcja'] == '100g' and pd.isna(df['Tłuszcz']):
+        return 'b. d.'
+    elif df['Porcja'] != '100g' and not pd.isna(df['Tłuszcz']):
+        x = df['Tłuszcz'] / 70
+        return str(round(x * 100)) + ' % RWS'
+    else:
+        return ''
+df['Zaw. tłuszczu'] = df.apply(fat_check, axis=1)
+
+
+# sugar check: 5g <= is low, > 22.5g is high / 90 g per day
+# carb check: / women 260 per day
+# https://www.nhs.uk/live-well/eat-well/food-types/how-does-sugar-in-our-diet-affect-our-health/
+# https://www.ibdrelief.com/diet/reference-intakes-on-food-labels-explained
+def sugar_check(df):
+    if df['Porcja'] == '100g' and df['Cukry proste'] <= 5:
+        return 'niska'
+    elif df['Porcja'] == '100g' and (5 < df['Cukry proste'] <= 22.5):
+        return 'średnia'
+    elif df['Porcja'] == '100g' and df['Cukry proste'] > 22.5:
+        return 'wysoka'
+    elif df['Porcja'] == '100g' and pd.isna(df['Cukry proste']):
+        return 'b. d.'
+    elif df['Porcja'] != '100g' and not pd.isna(df['Cukry proste']):
+        x = df['Cukry proste'] / 90
+        return str(round(x * 100)) + ' % max.'
+    else:
+        return ''
+df['Zaw. cukrów prostych'] = df.apply(sugar_check, axis=1)
+
+def carb_check(df):
+    # if df['Porcja'] == '100g' and df['Węglowodany'] <= 5:
+    #     return 'niska'
+    # elif df['Porcja'] == '100g' and (5 < df['Węglowodany'] <= 22.5):
+    #     return 'średnia'
+    # elif df['Porcja'] == '100g' and df['Węglowodany'] > 22.5:
+    #     return 'wysoka'
+    # elif df['Porcja'] == '100g' and pd.isna(df['Węglowodany']):
+    #     return 'b. d.'
+    if df['Porcja'] != '100g' and not pd.isna(df['Węglowodany']):
+        x = df['Węglowodany'] / 260
+        return str(round(x * 100)) + ' % RWS'
+    else:
+        return ''
+df['Zaw. węglowodanów'] = df.apply(carb_check, axis=1)
+
+
+# protein check: / women 50 g per day
+
+# https://www.ibdrelief.com/diet/reference-intakes-on-food-labels-explained
+# def protein_check(df):
+#     if df['Porcja'] == '100g' and df['Białko'] <= 5:
+#         return 'niska'
+#     elif df['Porcja'] == '100g' and (5 < df['Białko'] <= 22.5):
+#         return 'średnia'
+#     elif df['Porcja'] == '100g' and df['Białko'] > 22.5:
+#         return 'wysoka'
+#     elif df['Porcja'] == '100g' and pd.isna(df['Białko']):
+#         return 'b. d.'
+#     elif df['Porcja'] != '100g' and not pd.isna(df['Białko']):
+#         x = df['Białko'] / 50
+#         return str(round(x * 100)) + ' % RWS'
+#     else:
+#         return ''
+# df['Zaw. białka'] = df.apply(protein_check, axis=1)
+
 
 # df['Porcja'] = df['Porcja'].str.replace('g','').astype(int)
 
 # proporcje
-# kwasy tłuszczoe
-# sol
-# blonnik
-# cukry proste?
+# kaloryczność RWS / porcje?
 # jak duzo 'wody' + kcal na 100g lub tylko kcal na 100 g (produkty dietetyczne)
+
 
 
 
@@ -108,7 +242,6 @@ df['Węglowodany'] = df['Węglowodany'].str.replace(',','.').str.replace(' g',''
 # df = df.sort_values(by=['Porcja'])
 print(df.head(100))
 
-
 print('df', len(df.index))
 
 # https://sparkbyexamples.com/pandas/pandas-change-position-of-a-column/
@@ -117,10 +250,6 @@ print('df', len(df.index))
 
 # print(df.head(60))
 # print(type(mdf))
-
-
-
-
 
 
 # df2 = df.rename(columns={'level_0': "Produkt", 'level_1': "Porcja", 'Kwasy tłuszczowe nasycone': 'Tłuszcze nasycone', 'Wielkość porcji': 'Kopiuj'})
@@ -217,4 +346,3 @@ print(df2.head(20))
 df3 = df2.merge(stog_en_2, on='id', how='outer')
 print(df3.head(20))
 # print('df3', len(df3.index)) '''
-
