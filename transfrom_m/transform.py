@@ -98,7 +98,9 @@ female = 1  # for future
 # https://www.nhs.uk/Livewell/Goodfood/Documents/having-too-much-salt-survival-guide.pdf
 # https://www.nutrition.org.uk/life-stages/men/nutrition-recommendations-for-men/
 def salt_check(df):
-    if df['Porcja'] == '100g' and df['Sól'] < 0.3:
+    if df['Porcja'] == '100g' and df['Sól'] == 0:
+        return 'brak'
+    elif df['Porcja'] == '100g' and (0.0 < df['Sól'] < 0.3):
         return 'niska'
     elif df['Porcja'] == '100g' and (0.3 <= df['Sól'] <= 1.5):
         return 'średnia'
@@ -110,7 +112,7 @@ def salt_check(df):
         x = df['Sól'] / 6
         return str(round(x * 100)) + ' % max'
     else:
-        return ''
+        return np.nan
 df['Zaw. soli'] = df.apply(salt_check, axis=1)
 
 
@@ -118,7 +120,11 @@ df['Zaw. soli'] = df.apply(salt_check, axis=1)
 # https://www.bda.uk.com/resource/fibre.html
 # https://www.nutrition.org.uk/life-stages/men/nutrition-recommendations-for-men/
 def fibre_check(df):
-    if df['Porcja'] == '100g' and (3 <= df['Błonnik'] < 6):
+    if df['Porcja'] == '100g' and df['Błonnik'] == 0:
+        return 'brak'
+    elif df['Porcja'] == '100g' and (0 < df['Błonnik'] < 3):
+        return 'przeciętne'
+    elif df['Porcja'] == '100g' and (3 <= df['Błonnik'] < 6):
         return 'dobre'
     elif df['Porcja'] == '100g' and df['Błonnik'] >= 6.0:
         return 'b. dobre'
@@ -128,7 +134,7 @@ def fibre_check(df):
         x = df['Błonnik'] / 30
         return str(round(x * 100)) + ' % RWS'
     else:
-        return ''
+        return 'b. d.'
 df['Źródło błonnika'] = df.apply(fibre_check, axis=1)
 
 
@@ -156,7 +162,7 @@ def sat_fat_check(df):
         x = df['Tłuszcze nasycone'] / 31
         return str(round(x * 100)) + ' % max'
     else:
-        return ''
+        return 'b. d.'
 df['Zaw. t. nasyconych'] = df.apply(sat_fat_check, axis=1)
 
 def fat_check(df):
@@ -177,7 +183,7 @@ def fat_check(df):
         x = df['Tłuszcz'] / 97
         return str(round(x * 100)) + ' % RWS'
     else:
-        return ''
+        return 'b. d.'
 df['Zaw. tłuszczu'] = df.apply(fat_check, axis=1)
 
 
@@ -202,7 +208,7 @@ def sugar_check(df):
         elif df['Cukry proste'] < 27:
             return str(round(x * 100)) + ' % max'
     else:
-        return ''
+        return 'b. d.'
 df['Zaw. cukrów prostych'] = df.apply(sugar_check, axis=1)
 
 def carb_check(df):
@@ -213,7 +219,7 @@ def carb_check(df):
         x = df['Węglowodany'] / 333
         return str(round(x * 100)) + ' % RWS'
     else:
-        return ''
+        return np.nan
 df['Zaw. węglowodanów'] = df.apply(carb_check, axis=1)
 
 
@@ -228,7 +234,7 @@ def protein_check(df):
         x = df['Białko'] / 56
         return str(round(x * 100)) + ' % RWS'
     else:
-        return ''
+        return np.nan
 df['Zaw. białka'] = df.apply(protein_check, axis=1)
 
 
@@ -245,9 +251,9 @@ def balance_check(df):
             if 0.1 <= protein_proportion <= 0.35 and 0.2 <= fat_proportion <= 0.35 and 0.45 <= carb_proportion <= 0.65:
                 return "TAK"
             else:
-                return ''
+                return np.nan
     else:
-        return ""
+        return np.nan
 df['Bilans B:T:W'] = df.apply(balance_check, axis=1)
 
 
@@ -272,7 +278,7 @@ def caloric__check(df):
         x = df['Energia'] / 2500
         return str(round(x * 100)) + ' % RWS'
     else:
-        return ''
+        return 'b. d.'
 df['Kaloryczność'] = df.apply(caloric__check, axis=1)
 
 # rearranging cols
@@ -284,5 +290,11 @@ df.columns = ['PORCJA', 'ENERGIA', 'Kaloryczność', 'Bilans B:T:W', 'BIAŁKO', 
               'w tym: t. nasyc.', 'Zaw. t. nasyc.', 'WĘGLOWODANY', 'Zaw. węglow.', 'w tym: w. proste','Zaw. w. prost.',
               'BŁONNIK', 'Źródło błonnika ', 'SÓL', 'Zaw. soli']
 
-print(df.head(200))
-print('df', len(df.index))
+df.reset_index(inplace=True)
+df['Produkt'] = df['Produkt'].str.strip()
+df = df.sort_values(by=['Produkt'])
+
+# print(df.head(20))
+# print('df', len(df.index))
+
+df.to_pickle('ilewazy.pkl')
